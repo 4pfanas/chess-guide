@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to Play Chess</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Source+Serif+4:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f5efe0;
+    --dark: #1a1209;
+    --brown: #6b4c2a;
+    --gold: #c9973a;
+    --light-sq: #f0d9b5;
+    --dark-sq: #b58863;
+    --accent: #8b2020;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--cream);
+    color: var(--dark);
+    font-family: 'Source Serif 4', serif;
+    font-weight: 300;
+    min-height: 100vh;
+  }
+
+  .masthead {
+    background: var(--dark);
+    color: var(--cream);
+    text-align: center;
+    padding: 2.5rem 1rem 2rem;
+    border-bottom: 4px solid var(--gold);
+  }
+
+  .masthead h1 {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 7vw, 4.5rem);
+    letter-spacing: 0.05em;
+    line-height: 1;
+  }
+
+  .masthead .subtitle {
+    font-style: italic;
+    color: var(--gold);
+    margin-top: 0.4rem;
+    font-size: 1.05rem;
+    letter-spacing: 0.08em;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    gap: 2rem;
+  }
+
+  @media (min-width: 700px) {
+    .layout {
+      grid-template-columns: auto 1fr;
+      align-items: start;
+    }
+  }
+
+  /* ── BOARD ── */
+  .board-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .board-label {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--brown);
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    border: 3px solid var(--brown);
+    box-shadow: 6px 6px 0 var(--brown);
+    width: min(340px, 90vw);
+    height: min(340px, 90vw);
+    position: relative;
+  }
+
+  .sq {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.3rem, 4.5vw, 2rem);
+    cursor: default;
+    position: relative;
+    transition: filter 0.15s;
+    user-select: none;
+  }
+
+  .sq.light { background: var(--light-sq); }
+  .sq.dark  { background: var(--dark-sq); }
+
+  .sq.highlight::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(201,151,58,0.45);
+    pointer-events: none;
+  }
+
+  .sq[data-label]::before {
+    content: attr(data-label);
+    position: absolute;
+    bottom: 2px;
+    right: 3px;
+    font-size: 0.45rem;
+    font-family: 'Playfair Display', serif;
+    color: var(--brown);
+    opacity: 0.7;
+  }
+
+  /* ── PIECE LEGEND ── */
+  .pieces-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+
+  .piece-card {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.5rem 0.4rem;
+    text-align: center;
+    cursor: pointer;
+    transition: box-shadow 0.15s, border-color 0.15s;
+  }
+
+  .piece-card:hover, .piece-card.active {
+    box-shadow: 3px 3px 0 var(--gold);
+    border-color: var(--gold);
+  }
+
+  .piece-card .glyph { font-size: 1.6rem; line-height: 1; }
+  .piece-card .name {
+    font-family: 'Playfair Display', serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    margin-top: 0.2rem;
+    color: var(--brown);
+  }
+
+  /* ── CONTENT ── */
+  .content h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.5rem;
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 0.3rem;
+  }
+
+  .content p {
+    line-height: 1.7;
+    font-size: 0.98rem;
+    margin-bottom: 0.8rem;
+    color: #2a1f10;
+  }
+
+  .move-info {
+    background: var(--dark);
+    color: var(--cream);
+    border-radius: 4px;
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+    font-size: 0.93rem;
+    line-height: 1.7;
+    min-height: 80px;
+    border-left: 4px solid var(--gold);
+  }
+
+  .move-info strong {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    font-size: 1rem;
+  }
+
+  .rules-list {
+    list-style: none;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+
+  .rules-list li {
+    padding: 0.4rem 0 0.4rem 1.2rem;
+    border-bottom: 1px dashed #d4c4a0;
+    font-size: 0.93rem;
+    line-height: 1.6;
+    position: relative;
+  }
+
+  .rules-list li::before {
+    content: '♟';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-size: 0.8rem;
+  }
+
+  .section { margin-bottom: 1.8rem; }
+
+  .tag {
+    display: inline-block;
+    background: var(--accent);
+    color: white;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    font-family: 'Playfair Display', serif;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    margin-bottom: 0.4rem;
+  }
+
+  footer {
+    text-align: center;
+    padding: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--brown);
+    font-style: italic;
+    border-top: 1px solid #d4c4a0;
+  }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <h1>Chess</h1>
+  <p class="subtitle">A complete beginner's guide to the royal game</p>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: Board + piece selector -->
+  <div class="board-wrap">
+    <div class="board-label">Starting Position</div>
+    <div class="board" id="board"></div>
+    <div class="board-label" style="margin-top:0.8rem">Tap a piece below to see how it moves</div>
+    <div class="pieces-grid">
+      <div class="piece-card" onclick="showPiece('king')">   <div class="glyph">♔</div><div class="name">King</div></div>
+      <div class="piece-card" onclick="showPiece('queen')">  <div class="glyph">♕</div><div class="name">Queen</div></div>
+      <div class="piece-card" onclick="showPiece('rook')">   <div class="glyph">♖</div><div class="name">Rook</div></div>
+      <div class="piece-card" onclick="showPiece('bishop')"> <div class="glyph">♗</div><div class="name">Bishop</div></div>
+      <div class="piece-card" onclick="showPiece('knight')"> <div class="glyph">♘</div><div class="name">Knight</div></div>
+      <div class="piece-card" onclick="showPiece('pawn')">   <div class="glyph">♙</div><div class="name">Pawn</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Rules content -->
+  <div class="content">
+
+    <div class="section">
+      <div class="tag">Overview</div>
+      <h2>The Goal</h2>
+      <p>Chess is a two-player strategy game played on an 8×8 board. You control <strong>16 pieces</strong> — White moves first. The aim is to <strong>checkmate</strong> your opponent's King: trap it so it cannot escape capture.</p>
+    </div>
+
+    <div class="section">
+      <div class="tag">Piece Movement</div>
+      <h2>How Pieces Move</h2>
+      <div class="move-info" id="move-info">
+        <strong>♟ Select a piece above</strong><br>
+        Tap any piece card to highlight its moves on the board and learn how it moves.
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="tag">Core Rules</div>
+      <h2>Key Rules</h2>
+      <ul class="rules-list">
+        <li><strong>Check:</strong> Your King is under attack — you must immediately escape.</li>
+        <li><strong>Checkmate:</strong> King in check with no escape = game over.</li>
+        <li><strong>Stalemate:</strong> No legal moves but King is not in check = draw.</li>
+        <li><strong>Capture:</strong> Land on an opponent's square to remove their piece.</li>
+        <li><strong>Promotion:</strong> A Pawn reaching the far end becomes any piece (usually a Queen).</li>
+        <li><strong>Castling:</strong> King moves two squares toward a Rook; Rook jumps to the other side. Only if neither piece has moved and the path is clear.</li>
+        <li><strong>En passant:</strong> If a Pawn advances two squares past an enemy Pawn, that enemy Pawn may capture it as if it only moved one square.</li>
+      </ul>
+    </div>
+
+    <div class="section">
+      <div class="tag">Strategy</div>
+      <h2>Beginner Tips</h2>
+      <ul class="rules-list">
+        <li>Control the <strong>center</strong> — pieces in the center have more power.</li>
+        <li><strong>Develop</strong> your Knights and Bishops early.</li>
+        <li><strong>Castle early</strong> to keep your King safe.</li>
+        <li>Don't move the same piece twice in the opening without good reason.</li>
+        <li>Think about your opponent's threats before making your move.</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<footer>♔ The game of kings — played for over 1,500 years ♚</footer>
+
+<script>
+// Board setup
+const START = [
+  ['♜','♞','♝','♛','♚','♝','♞','♜'],
+  ['♟','♟','♟','♟','♟','♟','♟','♟'],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['','','','','','','',''],
+  ['♙','♙','♙','♙','♙','♙','♙','♙'],
+  ['♖','♘','♗','♕','♔','♗','♘','♖'],
+];
+
+const FILES = 'abcdefgh';
+const board = document.getElementById('board');
+
+for (let r = 0; r < 8; r++) {
+  for (let f = 0; f < 8; f++) {
+    const sq = document.createElement('div');
+    sq.className = 'sq ' + ((r + f) % 2 === 0 ? 'light' : 'dark');
+    sq.dataset.r = r;
+    sq.dataset.f = f;
+    sq.dataset.label = FILES[f] + (8 - r);
+    sq.textContent = START[r][f];
+    board.appendChild(sq);
+  }
+}
+
+function clearHighlights() {
+  document.querySelectorAll('.sq.highlight').forEach(s => s.classList.remove('highlight'));
+  document.querySelectorAll('.piece-card.active').forEach(c => c.classList.remove('active'));
+}
+
+// Highlight squares by [row, col] pairs
+function highlight(squares) {
+  squares.forEach(([r,f]) => {
+    if (r >= 0 && r < 8 && f >= 0 && f < 8) {
+      const idx = r * 8 + f;
+      board.children[idx].classList.add('highlight');
+    }
+  });
+}
+
+const PIECES = {
+  king: {
+    glyph: '♔',
+    info: '<strong>♔ King — 1 square any direction</strong><br>The King moves exactly one square in any direction. It cannot move into check. Protecting the King is everything — if it is checkmated, the game ends.',
+    from: [4, 4],
+    moves: () => {
+      const [r,f] = [4,4];
+      const m = [];
+      for (let dr=-1;dr<=1;dr++) for (let df=-1;df<=1;df++) if (dr||df) m.push([r+dr,f+df]);
+      return m;
+    }
+  },
+  queen: {
+    glyph: '♕',
+    info: '<strong>♕ Queen — Any direction, any distance</strong><br>The Queen is the most powerful piece. It slides any number of squares in all 8 directions — horizontally, vertically, or diagonally — but cannot jump over other pieces.',
+    from: [4, 3],
+    moves: () => {
+      const m = [];
+      const [r,f] = [4,3];
+      const dirs = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[1,-1],[-1,1],[-1,-1]];
+      dirs.forEach(([dr,df]) => { for(let i=1;i<8;i++) m.push([r+dr*i,f+df*i]); });
+      return m.filter(([r,f])=>r>=0&&r<8&&f>=0&&f<8);
+    }
+  },
+  rook: {
+    glyph: '♖',
+    info: '<strong>♖ Rook — Horizontal & vertical, any distance</strong><br>The Rook slides any number of squares along rows or columns. It cannot move diagonally. Rooks are most powerful in open files with no pawns in the way.',
+    from: [4, 0],
+    moves: () => {
+      const m = [];
+      const [r,f] = [4,0];
+      for(let i=0;i<8;i++) { if(i!==f) m.push([r,i]); if(i!==r) m.push([i,f]); }
+      return m;
+    }
+  },
+  bishop: {
+    glyph: '♗',
+    info: '<strong>♗ Bishop — Diagonals only, any distance</strong><br>The Bishop slides any number of squares diagonally. Each Bishop stays on one color its entire life. Two Bishops working together cover all squares.',
+    from: [4, 5],
+    moves: () => {
+      const m = [];
+      const [r,f] = [4,5];
+      const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
+      dirs.forEach(([dr,df]) => { for(let i=1;i<8;i++) { const nr=r+dr*i,nf=f+df*i; if(nr>=0&&nr<8&&nf>=0&&nf<8) m.push([nr,nf]); }});
+      return m;
+    }
+  },
+  knight: {
+    glyph: '♘',
+    info: '<strong>♘ Knight — L-shape, jumps over pieces</strong><br>The Knight moves in an "L": 2 squares in one direction, then 1 square perpendicular. It is the only piece that can jump over other pieces. Knights are tricky — they attack squares no other piece reaches easily.',
+    from: [4, 4],
+    moves: () => {
+      const [r,f] = [4,4];
+      return [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]].map(([dr,df])=>[r+dr,f+df]);
+    }
+  },
+  pawn: {
+    glyph: '♙',
+    info: '<strong>♙ Pawn — Forward only; captures diagonally</strong><br>Pawns move one square forward (or two squares from their starting position). They capture diagonally forward. Reach the far end and promote to any piece — usually a Queen!',
+    from: [4, 4],
+    moves: () => [[3,4],[2,4],[3,3],[3,5]]
+  }
+};
+
+function showPiece(name) {
+  clearHighlights();
+  const p = PIECES[name];
+  document.getElementById('move-info').innerHTML = p.info;
+  highlight(p.moves());
+  // Highlight source square
+  const [r,f] = p.from;
+  board.children[r*8+f].classList.add('highlight');
+  // Mark active card
+  const cards = document.querySelectorAll('.piece-card');
+  const order = ['king','queen','rook','bishop','knight','pawn'];
+  cards[order.indexOf(name)].classList.add('active');
+}
+</script>
+</body>
+</html>
