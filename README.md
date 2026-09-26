@@ -14,6 +14,9 @@ Tap a piece. See exactly where it can go. Learn the rules that trip up every beg
 
 </div>
 
+**Live demo:** https://4pfanas.github.io/chess-guide/
+
+
 ---
 
 ## Table of contents
